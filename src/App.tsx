@@ -25,6 +25,10 @@ function App() {
   const [isRaptorLoaded, setIsRaptorLoaded] = useState<boolean>(false); // 랩터 로딩 상태
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
+  // 스케일 조정을 위한 상태 추가
+  const [spineScale, setSpineScale] = useState<number>(0.4);
+  const [alienScale, setAlienScale] = useState<number>(0.3);
+
   // CanvasKit 및 렌더링 관련 객체들을 ref로 저장
   const ckRef = useRef<any>(null);
   const surfaceRef = useRef<any>(null);
@@ -201,7 +205,7 @@ function App() {
         // 드로어블 생성 및 스케일링, 위치 설정
         addDebugInfo("SkeletonDrawable 생성 중...");
         const drawable = new window.spine.SkeletonDrawable(skeletonData);
-        drawable.skeleton.scaleX = drawable.skeleton.scaleY = 0.4;
+        drawable.skeleton.scaleX = drawable.skeleton.scaleY = spineScale;
         drawable.skeleton.x = width / 2;
         drawable.skeleton.y = height - 50;
         drawableRef.current = drawable;
@@ -379,8 +383,8 @@ function App() {
         // 드로어블 생성 및 스케일링, 위치 설정
         addDebugInfo("두번째 캐릭터 SkeletonDrawable 생성 중...");
         const drawable = new window.spine.SkeletonDrawable(skeletonData);
-        drawable.skeleton.scaleX = drawable.skeleton.scaleY = 0.3;
-        drawable.skeleton.x = width / 2 + 100; // 원래 캐릭터보다 오른쪽에 위치
+        drawable.skeleton.scaleX = drawable.skeleton.scaleY = alienScale;
+        drawable.skeleton.x = width / 2 + 100;
         drawable.skeleton.y = height - 50;
         raptorDrawableRef.current = drawable;
         addDebugInfo("두번째 캐릭터 SkeletonDrawable 생성 완료");
@@ -526,6 +530,26 @@ function App() {
       raptorDrawableRef.current.skeleton.updateWorldTransform();
     } catch (error) {
       addDebugInfo(`랩터 애니메이션 변경 중 오류: ${error}`);
+    }
+  };
+
+  // 스파인보이 스케일 변경 함수
+  const changeSpineScale = (newScale: number) => {
+    setSpineScale(newScale);
+    if (drawableRef.current && drawableRef.current.skeleton) {
+      drawableRef.current.skeleton.scaleX = newScale;
+      drawableRef.current.skeleton.scaleY = newScale;
+      addDebugInfo(`스파인보이 스케일 변경: ${newScale.toFixed(2)}`);
+    }
+  };
+
+  // 에일리언 스케일 변경 함수
+  const changeAlienScale = (newScale: number) => {
+    setAlienScale(newScale);
+    if (raptorDrawableRef.current && raptorDrawableRef.current.skeleton) {
+      raptorDrawableRef.current.skeleton.scaleX = newScale;
+      raptorDrawableRef.current.skeleton.scaleY = newScale;
+      addDebugInfo(`에일리언 스케일 변경: ${newScale.toFixed(2)}`);
     }
   };
 
@@ -733,6 +757,23 @@ function App() {
               </button>
             ))}
           </div>
+
+          {/* 스파인보이 스케일 조정 슬라이더 추가 */}
+          <div className="scale-control">
+            <label>
+              스케일: {spineScale.toFixed(2)}
+              <input
+                type="range"
+                min="0.1"
+                max="1.0"
+                step="0.05"
+                value={spineScale}
+                onChange={(e) => changeSpineScale(parseFloat(e.target.value))}
+                disabled={!isLoaded}
+                style={{ width: "100%", marginTop: "8px" }}
+              />
+            </label>
+          </div>
         </div>
 
         {/* 랩터 애니메이션 선택 버튼들 */}
@@ -741,7 +782,7 @@ function App() {
           <div className="button-group">
             {raptorAnimations.map((anim) => (
               <button
-                key={`raptor-${anim}`}
+                key={`alien-${anim}`}
                 onClick={() => changeRaptorAnimation(anim)}
                 className={currentRaptorAnimation === anim ? "active" : ""}
                 disabled={!isRaptorLoaded}
@@ -749,6 +790,23 @@ function App() {
                 {anim}
               </button>
             ))}
+          </div>
+
+          {/* 에일리언 스케일 조정 슬라이더 추가 */}
+          <div className="scale-control">
+            <label>
+              스케일: {alienScale.toFixed(2)}
+              <input
+                type="range"
+                min="0.1"
+                max="1.0"
+                step="0.05"
+                value={alienScale}
+                onChange={(e) => changeAlienScale(parseFloat(e.target.value))}
+                disabled={!isRaptorLoaded}
+                style={{ width: "100%", marginTop: "8px" }}
+              />
+            </label>
           </div>
         </div>
 
@@ -765,8 +823,10 @@ function App() {
         {/* 현재 애니메이션 표시 */}
         <div className="current-animation">
           <p>
-            스파인보이: <strong>{currentAnimation || "없음"}</strong> | 랩터:{" "}
-            <strong>{currentRaptorAnimation || "없음"}</strong>
+            스파인보이: <strong>{currentAnimation || "없음"}</strong> (스케일:{" "}
+            {spineScale.toFixed(2)}) | 에일리언:{" "}
+            <strong>{currentRaptorAnimation || "없음"}</strong> (스케일:{" "}
+            {alienScale.toFixed(2)})
           </p>
           <p>
             상태:{" "}
