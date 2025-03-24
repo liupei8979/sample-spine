@@ -478,6 +478,7 @@ function App() {
               maxHeight: "200px",
               overflow: "auto",
               backgroundColor: "#f5f5f5",
+              color: "black",
               padding: "10px",
               fontSize: "12px",
               whiteSpace: "pre-wrap",

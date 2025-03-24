@@ -1,62 +1,107 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  width: 100%;
+  height: 100%;
 }
 
-/* 기존 CSS에 추가 */
 .app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   font-family: Arial, sans-serif;
+  background-color: #999999;
 }
 
-/* Spine Player 컨테이너 스타일 */
-.spine-player {
-  image-rendering: -webkit-optimize-contrast; /* 크롬/사파리용 */
-  image-rendering: crisp-edges; /* 파이어폭스용 */
+.canvas-container {
+  position: relative;
+  width: 800px;
+  height: 600px;
+  margin: 0 auto;
 }
 
-/* 미디어 쿼리를 사용하여 고해상도 디스플레이에 대응 */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .spine-player {
-    transform: translateZ(0); /* 하드웨어 가속 활성화 */
-  }
-}
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.loading-indicator,
+.error-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 5px;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.error-message {
+  background-color: rgba(220, 53, 69, 0.8);
+  max-width: 90%;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.controls-panel {
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
 }
 
-.card {
-  padding: 2em;
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
-.read-the-docs {
-  color: #888;
+button {
+  padding: 8px 16px;
+  background-color: #4a5568;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover:not(:disabled) {
+  background-color: #2d3748;
+}
+
+button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+button.active {
+  background-color: #4299e1;
+}
+
+.current-animation {
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #999999;
+  color: black;
+  border-radius: 4px;
+}
+
+.debug-info {
+  margin-top: 20px;
+}
+
+.debug-info pre {
+  max-height: 200px;
+  overflow: auto;
+  background-color: #f5f5f5;
+  padding: 10px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #2d3748;
 }
