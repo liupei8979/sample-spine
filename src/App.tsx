@@ -49,7 +49,7 @@ function App() {
         atlasPath: "https://esotericsoftware.com/files/examples/4.2/alien/export/alien.atlas",
         skeletonPath: "https://esotericsoftware.com/files/examples/4.2/alien/export/alien-pro.skel",
         initialScale: 0.3,
-        position: { x: 500, y: 550 }, // 오른쪽으로 이동
+        position: { x: 0, y: 0 },
     };
 
     // 에일리언 애니메이션 변경 함수
