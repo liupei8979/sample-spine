@@ -2,6 +2,8 @@ import "./App.css";
 
 import { useEffect, useRef, useState } from "react";
 
+import Loading from "./components/Loading";
+
 // 전역 타입 정의
 declare global {
   interface Window {
@@ -727,7 +729,7 @@ function App() {
         {/* 로딩 인디케이터 */}
         {(!isLoaded || !isRaptorLoaded) && !loadingError && (
           <div className="loading-indicator">
-            <p>Spine CanvasKit 로딩 중...</p>
+            <Loading height="full" />
           </div>
         )}
 

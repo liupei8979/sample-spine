@@ -1,0 +1,27 @@
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-container.full-height {
+  height: 100vh;
+}
+
+.loading-spinner {
+  height: 24px;
+  width: 24px;
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  border-width: 4px;
+  border-style: solid;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
