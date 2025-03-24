@@ -1,0 +1,1 @@
+export { useSpineCharacter } from "./useSpineCharacter";

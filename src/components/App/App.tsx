@@ -1,9 +1,9 @@
 import "./App.css";
 
-import { AnimationControls } from "./components/AnimationControls";
-import { DebugPanel } from "./components/DebugPanel";
-import Loading from "./components/loading/Loading";
-import { SpineCharacter } from "./components/SpineCharacter";
+import { AnimationControls } from "../AnimationControls";
+import { DebugPanel } from "../DebugPanel";
+import { Loading } from "../Loading";
+import { SpineCharacter } from "../SpineCharacter";
 import { useState } from "react";
 
 // 전역 타입 정의는 이제 types/spine.ts로 이동했습니다

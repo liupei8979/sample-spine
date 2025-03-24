@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSpineCharacter } from "../hooks/useSpineCharacter";
+import { useSpineCharacter } from "../../hooks/useSpineCharacter/useSpineCharacter";
 
 interface SpineCharacterProps {
     id: string;

@@ -2,7 +2,7 @@
 
 ## 개요
 
-이 프로젝트는 Spine 애니메이션을 웹 브라우저에서 CanvasKit(Skia)을 사용하여 렌더링하는 데모 애플리케이션입니다. React와 TypeScript로 구현되었으며, 여러 Spine 캐릭터를 동시에 로드하고 다양한 애니메이션을 제어할 수 있습니다.
+이 프로젝트는 Spine 애니메이션을 웹 브라우저에서 CanvasKit(Skia)을 사용하여 렌더링하는 데모 애플리케이션입니다. React와 TypeScript로 구현되었으며, 모듈식 컴포넌트 구조를 통해 여러 Spine 캐릭터를 동시에 로드하고 다양한 애니메이션을 제어할 수 있습니다.
 
 ## 주요 기능
 
@@ -13,6 +13,7 @@
 - 투명 배경 지원 (다른 요소와 중첩 가능)
 - 디버그 정보 표시
 - 고해상도 디스플레이 지원
+- 모듈식 컴포넌트 아키텍처
 
 ## 설치 및 실행
 
@@ -81,17 +82,54 @@ yarn add -D package-name
 ```
 sample-spine/
 ├── public/                  # 정적 에셋
-│   └── raptor/              # 추가 Spine 모델 에셋
+│   ├── assets/              # 정적 Spine 모델 및 이미지
+│   └── vite.svg             # Vite 로고
 ├── src/                     # 소스 코드
-│   ├── components/          # 재사용 가능한 컴포넌트
-│   │   └── Loading.tsx      # 로딩 인디케이터 컴포넌트
-│   ├── assets/              # 프로젝트 에셋
-│   ├── App.css              # 메인 애플리케이션 스타일
-│   ├── App.tsx              # 메인 애플리케이션 컴포넌트
-│   ├── index.css            # 전역 스타일
+│   ├── assets/              # 프로젝트 내부 에셋
+│   ├── components/          # 컴포넌트 폴더
+│   │   ├── App/             # 앱 컴포넌트
+│   │   │   ├── App.tsx      # 앱 로직
+│   │   │   ├── App.css      # 앱 스타일
+│   │   │   └── index.ts     # 내보내기
+│   │   ├── AnimationControls/
+│   │   │   ├── AnimationControls.tsx
+│   │   │   └── index.ts
+│   │   ├── DebugPanel/
+│   │   ├── Loading/
+│   │   ├── SpineCharacter/
+│   │   └── index.ts         # 모든 컴포넌트 내보내기
+│   ├── hooks/               # 커스텀 훅
+│   │   ├── useSpineCharacter/
+│   │   │   ├── useSpineCharacter.ts
+│   │   │   └── index.ts
+│   │   └── index.ts         # 모든 훅 내보내기
+│   ├── styles/              # 글로벌 스타일
+│   │   └── index.css        # 전역 스타일시트
+│   ├── types/               # 타입 정의
+│   │   ├── spine.ts         # Spine 관련 타입
+│   │   └── index.ts         # 타입 내보내기
 │   ├── main.tsx             # 진입점
 │   └── vite-env.d.ts        # Vite 타입 선언
 ```
+
+## 컴포넌트 구조
+
+이 프로젝트는 모듈식 컴포넌트 아키텍처를 사용합니다. 각 컴포넌트는 자체 폴더 내에 있으며 다음과 같은 패턴을 따릅니다:
+
+```
+ComponentName/
+├── ComponentName.tsx    # 컴포넌트 로직
+├── ComponentName.css    # 컴포넌트 스타일 (필요시)
+└── index.ts             # 내보내기 파일
+```
+
+이 패턴의 장점:
+
+- **모듈성**: 각 컴포넌트와 관련 파일이 한 곳에 모여 있습니다.
+- **유지보수성**: 컴포넌트 관련 파일을 쉽게 찾고 수정할 수 있습니다.
+- **가독성**: 깔끔한 import 경로(`import { Loading } from "components/Loading"`)
+- **확장성**: 새 컴포넌트를 쉽게 추가할 수 있습니다.
+- **재사용성**: 컴포넌트를 다른 프로젝트로 쉽게 이동할 수 있습니다.
 
 ## 사용 방법
 
@@ -115,8 +153,17 @@ sample-spine/
 
 ## 확장 및 사용자 정의
 
-- `src/App.tsx` 파일에서 Spine 모델 경로를 변경하여 다른 Spine 모델을 로드할 수 있습니다.
-- `src/App.css` 파일에서 UI 스타일을 사용자 정의할 수 있습니다.
+### 새 컴포넌트 추가
+
+1. `src/components/` 디렉토리 내에 새 폴더 생성
+2. 컴포넌트 파일, 스타일 파일, index.ts 추가
+3. `src/components/index.ts`에 해당 컴포넌트 내보내기 추가
+
+### 새 Spine 모델 추가
+
+1. Spine 에셋을 `public/assets/` 폴더에 추가
+2. `src/components/App/App.tsx`에서 새 모델 정보 추가
+3. 필요한 상태 변수와 컨트롤 추가
 
 ## 스크립트 설명
 
@@ -127,6 +174,7 @@ sample-spine/
 - `yarn preview`: 빌드된 결과물 미리보기
 - `yarn lint`: ESLint로 코드 검사
 - `yarn typecheck`: TypeScript 타입 체크
+- `yarn format`: Prettier로 코드 포맷팅
 
 ## 주의사항
 
@@ -137,7 +185,17 @@ sample-spine/
 
 - WebGL 관련 오류가 발생하면 브라우저의 하드웨어 가속이 활성화되어 있는지 확인하세요.
 - 특정 Spine 모델이 로드되지 않는 경우 모델 파일의 버전 호환성을 확인하세요.
+- 애니메이션 변경 중 오류가 발생하면 콘솔 로그를 확인하고 디버그 패널의 정보를 참조하세요.
+- 무한 업데이트 루프가 발생하면 컴포넌트의 상태 업데이트 로직을 확인하세요.
 
 ## 라이센스
 
 이 프로젝트는 MIT 라이센스로 제공됩니다. 자세한 내용은 LICENSE 파일을 참조하세요.
+
+## 기여 방법
+
+1. 저장소를 포크합니다.
+2. 새 브랜치를 생성합니다 (`git checkout -b feature/amazing-feature`).
+3. 변경사항을 커밋합니다 (`git commit -m 'Add some amazing feature'`).
+4. 브랜치에 푸시합니다 (`git push origin feature/amazing-feature`).
+5. Pull Request를 제출합니다.

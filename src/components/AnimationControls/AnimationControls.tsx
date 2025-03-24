@@ -1,4 +1,4 @@
-import "../App.css";
+import "../App/App.css";
 
 interface AnimationControlsProps {
     title: string;
