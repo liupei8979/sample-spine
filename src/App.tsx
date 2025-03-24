@@ -13,20 +13,30 @@ declare global {
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const raptorCanvasRef = useRef<HTMLCanvasElement>(null); // 랩터용 캔버스 ref 추가
   const [animations, setAnimations] = useState<string[]>([]);
+  const [raptorAnimations, setRaptorAnimations] = useState<string[]>([]); // 랩터 애니메이션 목록
   const [currentAnimation, setCurrentAnimation] = useState<string>("");
+  const [currentRaptorAnimation, setCurrentRaptorAnimation] =
+    useState<string>(""); // 랩터 현재 애니메이션
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [debugInfo, setDebugInfo] = useState<string>("");
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isRaptorLoaded, setIsRaptorLoaded] = useState<boolean>(false); // 랩터 로딩 상태
   const [loadingError, setLoadingError] = useState<string | null>(null);
 
   // CanvasKit 및 렌더링 관련 객체들을 ref로 저장
   const ckRef = useRef<any>(null);
   const surfaceRef = useRef<any>(null);
+  const raptorSurfaceRef = useRef<any>(null); // 랩터용 서피스
   const drawableRef = useRef<any>(null);
+  const raptorDrawableRef = useRef<any>(null); // 랩터용 드로어블
   const rendererRef = useRef<any>(null);
+  const raptorRendererRef = useRef<any>(null); // 랩터용 렌더러
   const animLoopRef = useRef<number | null>(null);
+  const raptorAnimLoopRef = useRef<number | null>(null); // 랩터용 애니메이션 루프
   const lastTimeRef = useRef<number>(0);
+  const raptorLastTimeRef = useRef<number>(0); // 랩터용 타임스탬프
 
   // 디버그 정보 추가 함수
   const addDebugInfo = (info: string) => {
@@ -165,8 +175,10 @@ function App() {
         addDebugInfo("Spine 에셋 로드 중...");
 
         // 공식 샘플 에셋 사용
-        const atlasPath = "/raptor/export/raptor-pma.atlas";
-        const skeletonPath = "/raptor/export/raptor-pro.skel";
+        const atlasPath =
+          "https://esotericsoftware.com/files/examples/4.2/spineboy/export/spineboy.atlas";
+        const skeletonPath =
+          "https://esotericsoftware.com/files/examples/4.2/spineboy/export/spineboy-pro.skel";
 
         // Atlas 로드
         addDebugInfo("atlas 로드 중...");
@@ -290,6 +302,233 @@ function App() {
     animLoopRef.current = surfaceRef.current.requestAnimationFrame(safeRender);
   };
 
+  // 랩터 CanvasKit 초기화 및 렌더링 함수
+  const initRaptorCanvasKit = async () => {
+    if (!raptorCanvasRef.current || !ckRef.current) {
+      addDebugInfo(
+        "랩터 캔버스 요소를 찾을 수 없거나 CanvasKit이 초기화되지 않았습니다"
+      );
+      return;
+    }
+
+    try {
+      addDebugInfo("랩터 초기화 중...");
+
+      // 캔버스 크기 설정 (고해상도 지원)
+      const dpr = window.devicePixelRatio || 1;
+      const canvas = raptorCanvasRef.current;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      // 파일 읽기 도우미 함수
+      const readFile = async (path: string) => {
+        addDebugInfo(`랩터 파일 로드 중: ${path}`);
+        try {
+          const response = await fetch(path);
+          if (!response.ok)
+            throw new Error(`Could not load file ${path}: ${response.status}`);
+          return await response.arrayBuffer();
+        } catch (error) {
+          addDebugInfo(`랩터 파일 로드 실패: ${path} - ${error}`);
+          throw error;
+        }
+      };
+
+      // 캔버스에서 서피스 생성
+      const surface = ckRef.current.MakeCanvasSurface("raptorCanvas");
+      if (!surface) {
+        const errorMsg = "랩터 서피스를 생성할 수 없습니다.";
+        addDebugInfo(errorMsg);
+        return;
+      }
+      raptorSurfaceRef.current = surface;
+
+      // 좌표계 스케일링
+      surface.getCanvas().scale(dpr, dpr);
+
+      // 에셋 로드
+      try {
+        addDebugInfo("두번째 캐릭터 에셋 로드 중...");
+
+        // 4.2 버전의 alien 에셋 사용 (랩터 대신)
+        const atlasPath =
+          "https://esotericsoftware.com/files/examples/4.2/alien/export/alien.atlas";
+        const skeletonPath =
+          "https://esotericsoftware.com/files/examples/4.2/alien/export/alien-pro.skel";
+
+        // Atlas 로드
+        addDebugInfo("두번째 캐릭터 atlas 로드 중...");
+        const atlas = await window.spine.loadTextureAtlas(
+          ckRef.current,
+          atlasPath,
+          readFile
+        );
+        addDebugInfo("두번째 캐릭터 atlas 로드 완료");
+
+        // 스켈레톤 데이터 로드
+        addDebugInfo("두번째 캐릭터 skeleton 데이터 로드 중...");
+        const skeletonData = await window.spine.loadSkeletonData(
+          skeletonPath,
+          atlas,
+          readFile
+        );
+        addDebugInfo("두번째 캐릭터 skeleton 데이터 로드 완료");
+
+        // 드로어블 생성 및 스케일링, 위치 설정
+        addDebugInfo("두번째 캐릭터 SkeletonDrawable 생성 중...");
+        const drawable = new window.spine.SkeletonDrawable(skeletonData);
+        drawable.skeleton.scaleX = drawable.skeleton.scaleY = 0.3;
+        drawable.skeleton.x = width / 2 + 100; // 원래 캐릭터보다 오른쪽에 위치
+        drawable.skeleton.y = height - 50;
+        raptorDrawableRef.current = drawable;
+        addDebugInfo("두번째 캐릭터 SkeletonDrawable 생성 완료");
+
+        // 렌더러 생성
+        addDebugInfo("랩터 SkeletonRenderer 생성 중...");
+        const renderer = new window.spine.SkeletonRenderer(ckRef.current);
+        raptorRendererRef.current = renderer;
+        addDebugInfo("랩터 SkeletonRenderer 생성 완료");
+
+        // 사용 가능한 애니메이션 목록 설정
+        const animList = skeletonData.animations.map((a: any) => a.name);
+        setRaptorAnimations(animList);
+        addDebugInfo(`사용 가능한 랩터 애니메이션: ${animList.join(", ")}`);
+
+        // 초기 애니메이션 설정
+        if (animList.length > 0) {
+          const firstAnim = animList[0];
+          drawable.animationState.setAnimation(0, firstAnim, true);
+          setCurrentRaptorAnimation(firstAnim);
+          addDebugInfo(`초기 랩터 애니메이션 설정: ${firstAnim}`);
+        }
+
+        // 로딩 완료 처리
+        setIsRaptorLoaded(true);
+        raptorLastTimeRef.current = performance.now();
+
+        // 애니메이션 루프 시작
+        setTimeout(() => {
+          addDebugInfo("랩터 애니메이션 루프 시작...");
+          startRaptorAnimationLoop();
+        }, 100);
+      } catch (error) {
+        const errorMsg = `랩터 에셋 로드 중 오류: ${error}`;
+        addDebugInfo(errorMsg);
+      }
+    } catch (error) {
+      const errorMsg = `랩터 초기화 중 오류: ${error}`;
+      addDebugInfo(errorMsg);
+    }
+  };
+
+  // 랩터 애니메이션 루프 함수
+  const startRaptorAnimationLoop = () => {
+    if (
+      !raptorSurfaceRef.current ||
+      !raptorDrawableRef.current ||
+      !raptorRendererRef.current ||
+      !ckRef.current
+    ) {
+      addDebugInfo("랩터 렌더링에 필요한 객체가 초기화되지 않았습니다");
+      return;
+    }
+
+    // 오류 처리 래퍼 함수
+    const safeRender = () => {
+      try {
+        const canvas = raptorSurfaceRef.current.getCanvas();
+
+        // 캔버스 클리어 - 알파값을 0으로 설정하여 투명하게
+        canvas.clear(ckRef.current.Color(52, 52, 54, 0));
+
+        if (isPlaying) {
+          // 델타 타임 계산
+          const now = performance.now();
+          const deltaTime = (now - raptorLastTimeRef.current) / 1000;
+          raptorLastTimeRef.current = now;
+
+          // 애니메이션 업데이트
+          raptorDrawableRef.current.update(deltaTime);
+        }
+
+        try {
+          // 스켈레톤 렌더링 시도
+          raptorRendererRef.current.render(canvas, raptorDrawableRef.current);
+        } catch (e) {
+          // 렌더링 실패 시 오류 기록하고 계속 진행
+          console.error("랩터 렌더링 중 오류 발생:", e);
+        }
+
+        // 다음 프레임 요청
+        raptorAnimLoopRef.current =
+          raptorSurfaceRef.current.requestAnimationFrame(safeRender);
+      } catch (e) {
+        addDebugInfo(`랩터 애니메이션 루프 오류: ${e}`);
+        // 오류 복구 시도
+        setTimeout(() => {
+          raptorAnimLoopRef.current =
+            raptorSurfaceRef.current?.requestAnimationFrame?.(safeRender);
+        }, 1000);
+      }
+    };
+
+    // 애니메이션 루프 시작
+    raptorAnimLoopRef.current =
+      raptorSurfaceRef.current.requestAnimationFrame(safeRender);
+  };
+
+  // 랩터 애니메이션 변경 함수
+  const changeRaptorAnimation = (animName: string) => {
+    addDebugInfo(`랩터 애니메이션 변경 시도: ${animName}`);
+
+    if (
+      !raptorDrawableRef.current ||
+      !raptorDrawableRef.current.animationState
+    ) {
+      addDebugInfo(
+        "랩터 드로어블 또는 애니메이션 상태가 초기화되지 않았습니다"
+      );
+      return;
+    }
+
+    try {
+      // 더 철저한 리셋 과정 추가
+      const animState = raptorDrawableRef.current.animationState;
+
+      // 모든 트랙 클리어
+      animState.clearTracks();
+
+      // 모든 리스너 제거 (이벤트 충돌 방지)
+      animState.clearListeners();
+
+      // 애니메이션 상태 강제 업데이트 (0초 경과)
+      animState.update(0);
+
+      // 스켈레톤 포즈 리셋 (기본 포즈로 되돌림)
+      raptorDrawableRef.current.skeleton.setToSetupPose();
+
+      // 새 애니메이션 설정 (loop: true)
+      const trackEntry = animState.setAnimation(0, animName, true);
+
+      // 트랙 진행 상태 초기화 (시작부터 재생)
+      if (trackEntry) {
+        trackEntry.trackTime = 0;
+        addDebugInfo(`랩터 애니메이션 변경 성공: ${animName}`);
+        setCurrentRaptorAnimation(animName);
+      } else {
+        addDebugInfo(`랩터 트랙 엔트리를 생성하지 못했습니다: ${animName}`);
+      }
+
+      // 추가 업데이트를 통해 변경사항 적용
+      animState.apply(raptorDrawableRef.current.skeleton);
+      raptorDrawableRef.current.skeleton.updateWorldTransform();
+    } catch (error) {
+      addDebugInfo(`랩터 애니메이션 변경 중 오류: ${error}`);
+    }
+  };
+
   // 컴포넌트 마운트 시 CanvasKit 초기화
   useEffect(() => {
     let checkCanvasKitInterval: ReturnType<typeof setInterval>; // NodeJS.Timeout 대신 사용
@@ -303,6 +542,12 @@ function App() {
         ) {
           addDebugInfo("CanvasKit 및 Spine 라이브러리가 로드되었습니다.");
           initCanvasKit();
+          // 스파인보이 로드 후 랩터 초기화
+          setTimeout(() => {
+            if (ckRef.current) {
+              initRaptorCanvasKit();
+            }
+          }, 500);
         } else {
           // 아직 스크립트가 로드되지 않았다면 로드 대기
           addDebugInfo("CanvasKit 또는 Spine 라이브러리 로드 대기 중...");
@@ -376,6 +621,32 @@ function App() {
         rendererRef.current = null;
         ckRef.current = null;
 
+        // 랩터 리소스 정리
+        if (raptorAnimLoopRef.current !== null) {
+          if (raptorSurfaceRef.current) {
+            try {
+              raptorSurfaceRef.current.cancelAnimationFrame(
+                raptorAnimLoopRef.current
+              );
+            } catch (e) {
+              console.error("랩터 cancelAnimationFrame 오류:", e);
+            }
+          }
+          raptorAnimLoopRef.current = null;
+        }
+
+        if (raptorSurfaceRef.current) {
+          try {
+            raptorSurfaceRef.current.delete();
+          } catch (e) {
+            console.error("랩터 surface 삭제 오류:", e);
+          }
+          raptorSurfaceRef.current = null;
+        }
+
+        raptorDrawableRef.current = null;
+        raptorRendererRef.current = null;
+
         addDebugInfo("모든 리소스가 정리되었습니다.");
       } catch (e) {
         console.error("정리 중 오류:", e);
@@ -396,7 +667,8 @@ function App() {
       <h1>Spine CanvasKit 데모</h1>
 
       {/* 캔버스 컨테이너 */}
-      <div className="canvas-container">
+      <div className="canvas-container" style={{ position: "relative" }}>
+        {/* 기존 스파인보이 캔버스 */}
         <canvas
           id="spineCanvas"
           ref={canvasRef}
@@ -407,11 +679,29 @@ function App() {
             display: "block",
             backgroundColor: "transparent",
             imageRendering: "crisp-edges" as const,
+            position: "absolute",
+            zIndex: 1,
+          }}
+        />
+
+        {/* 랩터 캔버스 (위에 표시) */}
+        <canvas
+          id="raptorCanvas"
+          ref={raptorCanvasRef}
+          style={{
+            width: "800px",
+            height: "600px",
+            margin: "20px auto",
+            display: "block",
+            backgroundColor: "transparent",
+            imageRendering: "crisp-edges" as const,
+            position: "absolute",
+            zIndex: 2,
           }}
         />
 
         {/* 로딩 인디케이터 */}
-        {!isLoaded && !loadingError && (
+        {(!isLoaded || !isRaptorLoaded) && !loadingError && (
           <div className="loading-indicator">
             <p>Spine CanvasKit 로딩 중...</p>
           </div>
@@ -428,9 +718,9 @@ function App() {
 
       {/* 커스텀 컨트롤 패널 */}
       <div className="controls-panel">
-        {/* 애니메이션 선택 버튼들 */}
+        {/* 스파인보이 애니메이션 선택 버튼들 */}
         <div className="animation-buttons">
-          <h3>애니메이션 선택</h3>
+          <h3>스파인보이 애니메이션</h3>
           <div className="button-group">
             {animations.map((anim) => (
               <button
@@ -438,6 +728,23 @@ function App() {
                 onClick={() => changeAnimation(anim)}
                 className={currentAnimation === anim ? "active" : ""}
                 disabled={!isLoaded}
+              >
+                {anim}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 랩터 애니메이션 선택 버튼들 */}
+        <div className="animation-buttons">
+          <h3>랩터 애니메이션</h3>
+          <div className="button-group">
+            {raptorAnimations.map((anim) => (
+              <button
+                key={`raptor-${anim}`}
+                onClick={() => changeRaptorAnimation(anim)}
+                className={currentRaptorAnimation === anim ? "active" : ""}
+                disabled={!isRaptorLoaded}
               >
                 {anim}
               </button>
@@ -458,12 +765,17 @@ function App() {
         {/* 현재 애니메이션 표시 */}
         <div className="current-animation">
           <p>
-            현재 애니메이션: <strong>{currentAnimation || "없음"}</strong>
+            스파인보이: <strong>{currentAnimation || "없음"}</strong> | 랩터:{" "}
+            <strong>{currentRaptorAnimation || "없음"}</strong>
           </p>
           <p>
             상태:{" "}
             <strong>
-              {loadingError ? "오류 발생" : isLoaded ? "로드됨" : "로드 중..."}
+              {loadingError
+                ? "오류 발생"
+                : isLoaded && isRaptorLoaded
+                ? "모두 로드됨"
+                : "로드 중..."}
             </strong>
           </p>
         </div>
