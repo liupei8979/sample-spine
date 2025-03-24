@@ -165,10 +165,8 @@ function App() {
         addDebugInfo("Spine 에셋 로드 중...");
 
         // 공식 샘플 에셋 사용
-        const atlasPath =
-          "https://esotericsoftware.com/files/examples/4.2/spineboy/export/spineboy.atlas";
-        const skeletonPath =
-          "https://esotericsoftware.com/files/examples/4.2/spineboy/export/spineboy-pro.skel";
+        const atlasPath = "/raptor/export/raptor-pma.atlas";
+        const skeletonPath = "/raptor/export/raptor-pro.skel";
 
         // Atlas 로드
         addDebugInfo("atlas 로드 중...");
@@ -254,8 +252,8 @@ function App() {
       try {
         const canvas = surfaceRef.current.getCanvas();
 
-        // 캔버스 클리어
-        canvas.clear(ckRef.current.Color(52, 52, 54, 1));
+        // 캔버스 클리어 - 알파값을 0으로 설정하여 투명하게
+        canvas.clear(ckRef.current.Color(52, 52, 54, 0));
 
         if (isPlaying) {
           // 델타 타임 계산
@@ -407,7 +405,7 @@ function App() {
             height: "600px",
             margin: "20px auto",
             display: "block",
-            backgroundColor: "#343436",
+            backgroundColor: "transparent",
             imageRendering: "crisp-edges" as const,
           }}
         />
